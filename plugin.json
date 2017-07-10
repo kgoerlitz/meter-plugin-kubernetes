@@ -25,6 +25,14 @@
 			"required": true
 		},
 		{
+			"title": "Source Prefix",
+			"name": "sourcePrefix",
+			"description": "The prefix to use for the metric sources (sources will be <prefix>.cluster and <prefix>.pod.<pod-name>).",
+			"type": "string",
+			"default": "",
+			"required": false
+		},
+		{
 			"title": "Poll Interval (ms)",
 			"name": "pollInterval",
 			"description": "The Poll Interval (in milliseconds) to call the command.",

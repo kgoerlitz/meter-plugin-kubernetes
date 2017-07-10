@@ -1,14 +1,14 @@
 'use strict';
 
-const plugin               = require('./plugin.json');
+const params               = require('./param.json');
 const metrics              = require('./metrics.json');
 const os                   = require('os');
 const postprocessors       = require('./postprocessors');
 const { getByPath, fetch } = require('./util');
 
-const pollInterval = plugin.pollInterval || 5000;
-const baseURL      = plugin.baseURL;
-const source       = (plugin.source || os.hostname()).trim(); // get the metric source
+const pollInterval = params.pollInterval || 5000;
+const baseURL      = params.hipsterUrl;
+const source       = (params.sourcePrefix || os.hostname()).trim(); // get the metric source
 
 if (!baseURL) {
     throw new ReferenceError('Kubernetes Hipster url is missing');
@@ -25,7 +25,7 @@ function poll() {
                 return fetch(`${baseURL}${value.url}${metricData.endpoints.final}`)
                 .then(finalData => {
                     let result = getByPath(metricData.resultPath || [], finalData);
-                    return { url: value.url, result };
+                    return { url: value.url, result, name: value.name };
                 })
                 .then(data => {
                     let postprocessors = metricData.postprocessors;
@@ -35,7 +35,7 @@ function poll() {
                     return sequentially(postprocessors, data, metricData);
                 });
             }))
-            .then(result => ({ metric, result }));
+            .then(result => ({ metric, result, name: result.name }));
         });
     }))
     .then(data => data.reduce((result, current) => {
@@ -75,7 +75,7 @@ function getInstanceUrls(loopBy, result = { url: '' }) {
     .then(data => {
         return Promise.all(data.map(a => {
             let updatedLoopBy = loopBy.slice(1);
-            return getInstanceUrls(updatedLoopBy, { url: `${result.url}${loopBy[0].endpoint}/${a}` });
+            return getInstanceUrls(updatedLoopBy, { url: `${result.url}${loopBy[0].endpoint}/${a}`, name: a });
         }));
     });
 }
@@ -84,7 +84,7 @@ function writeOutput(data) {
     for (let metric in data) {
         if(data.hasOwnProperty(metric)) {
             data[metric].forEach(issue => {
-                console.log(`${metric} ${source} ${issue.result}`);
+                console.log(`${metric} ${issue.result} ${source}.${metrics[metric].instanceType}.${issue.name}`);
             });
         }
     }

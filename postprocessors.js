@@ -1,9 +1,9 @@
 'use strict';
 
-const plugin               = require('./plugin.json');
+const params               = require('./param.json');
 const { getByPath, fetch } = require('./util');
 
-const baseURL = plugin.baseURL;
+const baseURL = params.hipsterUrl;
 
 module.exports = {
     castCPUToPercentage(data, metricData) {
@@ -18,6 +18,6 @@ function castToPercentage(data, metricData, url) {
     return fetch(url)
     .then(result => {
         let localResult = getByPath(metricData.resultPath || [], result);
-        return { url: data.url, result: (data.result*100/localResult).toFixed(1) };
+        return { url: data.url, result: (data.result/localResult).toFixed(3), name: data.name };
     });
 }
